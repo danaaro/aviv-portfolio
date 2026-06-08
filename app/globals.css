@@ -1,26 +1,105 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #c8c8c8;
+  --surface: #bebebe;
+  --border: #aaaaaa;
+  --text: #111111;
+  --text-muted: #555;
+  --silver-start: #d6d6d6;
+  --silver-mid: #bebebe;
+  --silver-end: #a4a4a4;
+  --silver-border: #888;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* ── Gallery placeholder tiles ───────────────────────── */
+.photo-placeholder {
+  color: #999;
+}
+
+/* ── Silver Apple-style nav tab ─────────────────────── */
+.nav-tab {
+  display: inline-block;
+  padding: 5px 16px 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #222;
+  letter-spacing: 0.01em;
+  background: linear-gradient(to bottom, #e2e2e2, #c8c8c8);
+  border: 1px solid #999;
+  border-bottom: none;
+  border-radius: 5px 5px 0 0;
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+  top: 1px;
+  transition: background 0.1s;
+  white-space: nowrap;
+  user-select: none;
+}
+.nav-tab:hover {
+  background: linear-gradient(to bottom, #ececec, #d4d4d4);
+}
+.nav-tab.active {
+  background: linear-gradient(to bottom, #f4f4f4, #e0e0e0);
+  border-color: #888;
+  border-bottom: 1px solid #e8e8e8;
+  color: #000;
+  font-weight: 600;
+  z-index: 2;
+}
+
+/* ── Photography sub-tabs ───────────────────────────── */
+.sub-tab {
+  padding: 8px 20px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  user-select: none;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.sub-tab:hover { color: #111; }
+.sub-tab.active {
+  color: #111;
+  border-bottom-color: #111;
+}
+.sub-tab.disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+/* ── Lightbox ────────────────────────────────────────── */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
