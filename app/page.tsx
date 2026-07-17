@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import Desktop from '@/components/Desktop'
 
 export default function Home() {
-  redirect('/photography')
+  return <Desktop />
 }

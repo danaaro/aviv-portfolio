@@ -43,11 +43,72 @@ export default function NavBar() {
       {/* ── Full header — scrolls with page ─────────── */}
       <header
         style={{
-          background: 'linear-gradient(to bottom, #d6d6d6 0%, #c2c2c2 60%, #ababab 100%)',
+          position: 'relative',
+          background: `
+            linear-gradient(180deg, #eeeeee 0%, #dcdcdc 18%, #c8c8c8 42%, #bcbcbc 58%, #ababab 82%, #9e9e9e 100%),
+            repeating-linear-gradient(180deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 1px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 3px)
+          `,
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75), inset 0 -1px 0 rgba(0,0,0,0.12)',
           borderBottom: '1px solid #888',
+          overflow: 'hidden',
         }}
         className="w-full"
       >
+        {/* Engraved mark, top right — brushed into the metal, not painted on */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 6,
+            right: 18,
+            width: 52,
+            pointerEvents: 'none',
+          }}
+        >
+          {/* raised edge catching light */}
+          <img
+            src="/crispy-mark.png"
+            alt=""
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: 'auto',
+              filter: 'invert(1)',
+              transform: 'translate(-1.6px, -1.6px)',
+              mixBlendMode: 'soft-light',
+              opacity: 0.95,
+            }}
+          />
+          {/* recessed groove shadow */}
+          <img
+            src="/crispy-mark.png"
+            alt=""
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: 'auto',
+              transform: 'translate(1.6px, 1.6px)',
+              mixBlendMode: 'multiply',
+              opacity: 0.65,
+              filter: 'blur(0.3px)',
+            }}
+          />
+          {/* base — same metal tone as the bar, not black ink */}
+          <img
+            src="/crispy-mark.png"
+            alt=""
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: 'auto',
+              mixBlendMode: 'overlay',
+              opacity: 0.4,
+            }}
+          />
+        </div>
+
         {/* Name strip */}
         <div className="px-6 pt-4 pb-1">
           <Link
@@ -82,9 +143,12 @@ export default function NavBar() {
           left: 0,
           right: 0,
           zIndex: 50,
-          background: 'linear-gradient(to bottom, #d0d0d0, #b8b8b8)',
+          background: `
+            linear-gradient(180deg, #e4e4e4 0%, #d0d0d0 30%, #bcbcbc 65%, #adadad 100%),
+            repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 3px)
+          `,
           borderBottom: '1px solid #888',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.7)',
           transform: scrolled ? 'translateY(0)' : 'translateY(-100%)',
           transition: 'transform 0.25s ease',
         }}

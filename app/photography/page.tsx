@@ -2,58 +2,27 @@
 
 import { useState } from 'react'
 import Gallery, { Photo } from '@/components/Gallery'
+import FolderTabs from '@/components/FolderTabs'
 import photographyData from '@/data/photography.json'
 
-const SECTIONS: { key: SectionKey; label: string; disabled?: boolean }[] = [
-  { key: 'army', label: 'Army' },
-  { key: 'concerts', label: 'Concerts' },
-  { key: 'fashion', label: 'Fashion' },
-  { key: 'more', label: 'More', disabled: true },
-]
-
-type SectionKey = 'army' | 'concerts' | 'fashion' | 'more'
-
-
 export default function PhotographyPage() {
-  const [active, setActive] = useState<SectionKey>('army')
+  const folders = photographyData.folders
+  const [active, setActive] = useState(folders[0]?.id ?? '')
 
-  const photos: Photo[] = (photographyData[active] as Photo[]) ?? []
+  if (folders.length === 0) {
+    return (
+      <div style={{ padding: '80px 20px', textAlign: 'center', color: '#888', fontSize: 14, letterSpacing: '0.08em' }}>
+        No folders yet
+      </div>
+    )
+  }
+
+  const folder = folders.find(f => f.id === active) ?? folders[0]
+  const photos: Photo[] = folder.photos as Photo[]
 
   return (
     <div>
-      {/* Sub-tab bar */}
-      <div
-        style={{
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          overflowX: 'auto',
-          paddingLeft: 16,
-        }}
-      >
-        {SECTIONS.map(s => (
-          <button
-            key={s.key}
-            onClick={() => !s.disabled && setActive(s.key as SectionKey)}
-            className={`sub-tab${active === s.key ? ' active' : ''}${s.disabled ? ' disabled' : ''}`}
-          >
-            {s.label}
-            {s.disabled && (
-              <span
-                style={{
-                  marginLeft: 6,
-                  fontSize: 9,
-                  letterSpacing: '0.05em',
-                  color: '#999',
-                }}
-              >
-                SOON
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Gallery */}
+      <FolderTabs folders={folders} active={folder.id} onChange={setActive} />
       <Gallery photos={photos} emptyLabel="Content coming soon" />
     </div>
   )

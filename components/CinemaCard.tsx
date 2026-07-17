@@ -1,29 +1,16 @@
-interface Film {
-  id: string
-  title: string
-  duration: string
-  year?: number
-  posterSrc: string
-  youtubeUrl: string
-  description?: string
-}
+import type { Film } from './FilmDetail'
 
 interface CinemaCardProps {
   film: Film
+  onSelect: (film: Film) => void
 }
 
-export default function CinemaCard({ film }: CinemaCardProps) {
-  const handleClick = () => {
-    if (film.youtubeUrl) {
-      window.open(film.youtubeUrl, '_blank', 'noopener')
-    }
-  }
-
+export default function CinemaCard({ film, onSelect }: CinemaCardProps) {
   return (
     <div
-      onClick={film.youtubeUrl ? handleClick : undefined}
+      onClick={() => onSelect(film)}
       style={{
-        cursor: film.youtubeUrl ? 'pointer' : 'default',
+        cursor: 'pointer',
         background: 'var(--surface)',
       }}
       className="group"
@@ -69,37 +56,35 @@ export default function CinemaCard({ film }: CinemaCardProps) {
         )}
 
         {/* Play overlay */}
-        {film.youtubeUrl && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: 0,
+            transition: 'opacity 0.25s',
+          }}
+          className="group-hover:opacity-100"
+        >
           <div
             style={{
-              position: 'absolute',
-              inset: 0,
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              border: '2px solid rgba(255,255,255,0.7)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              opacity: 0,
-              transition: 'opacity 0.25s',
             }}
-            className="group-hover:opacity-100"
           >
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.15)',
-                border: '2px solid rgba(255,255,255,0.7)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+              <path d="M8 5v14l11-7z" />
+            </svg>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Info */}
