@@ -2,10 +2,7 @@
 
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
-import photographyData from '@/data/photography.json'
-import cinemaData from '@/data/cinema.json'
-import commercialData from '@/data/commercial.json'
+import { useState, useEffect } from 'react'
 
 const Smiley3D = dynamic(() => import('./Smiley3D'), { ssr: false })
 
@@ -18,17 +15,36 @@ interface FolderItem {
   glyph?: 'about' | 'admin'
 }
 
-const FOLDERS: FolderItem[] = [
-  { label: 'Photography', href: '/photography', thumb: photographyData.folders?.[0]?.photos?.[0]?.src },
-  { label: 'Cinema', href: '/cinema', thumb: cinemaData.folders?.[0]?.films?.[0]?.posterSrc },
-  { label: 'Commercial', href: '/commercial', thumb: commercialData.folders?.[0]?.items?.[0]?.src },
-  { label: 'About', href: '/about', glyph: 'about' },
-  { label: 'Admin', href: '/admin', glyph: 'admin' },
-]
+interface Thumbs {
+  photography?: string
+  cinema?: string
+  commercial?: string
+}
 
 export default function Desktop() {
   const [query, setQuery] = useState('')
   const [view, setView] = useState<ViewMode>('grid')
+  const [thumbs, setThumbs] = useState<Thumbs>({})
+
+  useEffect(() => {
+    fetch('/api/admin?action=read')
+      .then(res => res.json())
+      .then(data => {
+        setThumbs({
+          photography: data.photography.folders?.[0]?.photos?.[0]?.src,
+          cinema: data.cinema.folders?.[0]?.films?.[0]?.posterSrc,
+          commercial: data.commercial.folders?.[0]?.items?.[0]?.src,
+        })
+      })
+  }, [])
+
+  const FOLDERS: FolderItem[] = [
+    { label: 'Photography', href: '/photography', thumb: thumbs.photography },
+    { label: 'Cinema', href: '/cinema', thumb: thumbs.cinema },
+    { label: 'Commercial', href: '/commercial', thumb: thumbs.commercial },
+    { label: 'About', href: '/about', glyph: 'about' },
+    { label: 'Admin', href: '/admin', glyph: 'admin' },
+  ]
 
   const filtered = FOLDERS.filter(f =>
     f.label.toLowerCase().includes(query.trim().toLowerCase())

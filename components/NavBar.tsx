@@ -65,7 +65,7 @@ export default function NavBar() {
             pointerEvents: 'none',
           }}
         >
-          {/* raised edge catching light */}
+          {/* raised edge catching light — bright silver */}
           <img
             src="/crispy-mark.png"
             alt=""
@@ -77,10 +77,10 @@ export default function NavBar() {
               filter: 'invert(1)',
               transform: 'translate(-1.6px, -1.6px)',
               mixBlendMode: 'soft-light',
-              opacity: 0.95,
+              opacity: 1,
             }}
           />
-          {/* recessed groove shadow */}
+          {/* recessed groove shadow — soft gray, not black */}
           <img
             src="/crispy-mark.png"
             alt=""
@@ -89,13 +89,13 @@ export default function NavBar() {
               inset: 0,
               width: '100%',
               height: 'auto',
+              filter: 'invert(1) brightness(0.55) blur(0.3px)',
               transform: 'translate(1.6px, 1.6px)',
               mixBlendMode: 'multiply',
-              opacity: 0.65,
-              filter: 'blur(0.3px)',
+              opacity: 0.6,
             }}
           />
-          {/* base — same metal tone as the bar, not black ink */}
+          {/* base — faint silver tone to ground the shape */}
           <img
             src="/crispy-mark.png"
             alt=""
@@ -103,8 +103,9 @@ export default function NavBar() {
               position: 'relative',
               width: '100%',
               height: 'auto',
-              mixBlendMode: 'overlay',
-              opacity: 0.4,
+              filter: 'invert(1) brightness(0.85)',
+              mixBlendMode: 'soft-light',
+              opacity: 0.5,
             }}
           />
         </div>

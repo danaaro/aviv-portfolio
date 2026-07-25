@@ -33,10 +33,7 @@ export default function AboutPage() {
         </p>
         <p style={{ marginBottom: 24 }}>
           Trained in Film &amp; Television Engineering at ORT Psgot College, Aviv spent three years
-          as an operational combat photographer in the Israeli Navy — documenting naval activities
-          in real-time, accompanying sensitive IDF diplomatic missions abroad, and covering
-          internationally resonant events including protest flotillas and activists such as Greta
-          Thunberg.
+          as an operational combat photographer in the Israeli Navy.
         </p>
         <p style={{ marginBottom: 24 }}>
           Before and beyond his military service, he built his creative life deliberately: archiving

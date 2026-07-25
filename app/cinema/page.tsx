@@ -1,15 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CinemaCard from '@/components/CinemaCard'
 import FolderTabs from '@/components/FolderTabs'
 import FilmDetail, { Film } from '@/components/FilmDetail'
-import cinemaData from '@/data/cinema.json'
+
+interface CinemaFolder {
+  id: string
+  name: string
+  films: Film[]
+}
 
 export default function CinemaPage() {
-  const folders = cinemaData.folders
-  const [active, setActive] = useState(folders[0]?.id ?? '')
+  const [folders, setFolders] = useState<CinemaFolder[] | null>(null)
+  const [active, setActive] = useState('')
   const [selected, setSelected] = useState<Film | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin?action=read')
+      .then(res => res.json())
+      .then(data => {
+        setFolders(data.cinema.folders)
+        setActive(data.cinema.folders[0]?.id ?? '')
+      })
+  }, [])
+
+  if (folders === null) return null
 
   if (folders.length === 0) {
     return (
@@ -20,7 +36,7 @@ export default function CinemaPage() {
   }
 
   const folder = folders.find(f => f.id === active) ?? folders[0]
-  const films = folder.films as Film[]
+  const films = folder.films
 
   return (
     <div>

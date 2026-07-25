@@ -1,13 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Gallery, { Photo } from '@/components/Gallery'
 import FolderTabs from '@/components/FolderTabs'
-import commercialData from '@/data/commercial.json'
+
+interface CommercialFolder {
+  id: string
+  name: string
+  items: Photo[]
+}
 
 export default function CommercialPage() {
-  const folders = commercialData.folders
-  const [active, setActive] = useState(folders[0]?.id ?? '')
+  const [folders, setFolders] = useState<CommercialFolder[] | null>(null)
+  const [active, setActive] = useState('')
+
+  useEffect(() => {
+    fetch('/api/admin?action=read')
+      .then(res => res.json())
+      .then(data => {
+        setFolders(data.commercial.folders)
+        setActive(data.commercial.folders[0]?.id ?? '')
+      })
+  }, [])
+
+  if (folders === null) return null
 
   if (folders.length === 0) {
     return (
@@ -18,7 +34,7 @@ export default function CommercialPage() {
   }
 
   const folder = folders.find(f => f.id === active) ?? folders[0]
-  const items: Photo[] = folder.items as Photo[]
+  const items: Photo[] = folder.items
 
   return (
     <div>

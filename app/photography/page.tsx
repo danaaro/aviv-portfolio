@@ -1,13 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Gallery, { Photo } from '@/components/Gallery'
 import FolderTabs from '@/components/FolderTabs'
-import photographyData from '@/data/photography.json'
+
+interface PhotoFolder {
+  id: string
+  name: string
+  photos: Photo[]
+}
 
 export default function PhotographyPage() {
-  const folders = photographyData.folders
-  const [active, setActive] = useState(folders[0]?.id ?? '')
+  const [folders, setFolders] = useState<PhotoFolder[] | null>(null)
+  const [active, setActive] = useState('')
+
+  useEffect(() => {
+    fetch('/api/admin?action=read')
+      .then(res => res.json())
+      .then(data => {
+        setFolders(data.photography.folders)
+        setActive(data.photography.folders[0]?.id ?? '')
+      })
+  }, [])
+
+  if (folders === null) return null
 
   if (folders.length === 0) {
     return (
@@ -18,7 +34,7 @@ export default function PhotographyPage() {
   }
 
   const folder = folders.find(f => f.id === active) ?? folders[0]
-  const photos: Photo[] = folder.photos as Photo[]
+  const photos: Photo[] = folder.photos
 
   return (
     <div>

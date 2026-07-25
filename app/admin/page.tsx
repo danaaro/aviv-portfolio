@@ -226,6 +226,8 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [pw, setPw] = useState('')
   const [pwError, setPwError] = useState('')
+  const [username, setUsername] = useState<'aviv' | 'dana'>('aviv')
+  const [signedInAs, setSignedInAs] = useState('')
   const [section, setSection] = useState<Section>('photography')
   const [activeFolders, setActiveFolders] = useState<Record<Section, string>>({
     photography: '',
@@ -239,7 +241,11 @@ export default function AdminPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('admin_authed')
-      if (saved === 'true') setAuthed(true)
+      const savedUser = localStorage.getItem('admin_user')
+      if (saved === 'true' && savedUser) {
+        setAuthed(true)
+        setSignedInAs(savedUser)
+      }
     }
   }, [])
 
@@ -247,14 +253,16 @@ export default function AdminPage() {
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'auth', password: pw }),
+      body: JSON.stringify({ action: 'auth', username, password: pw }),
     })
     if (res.ok) {
       localStorage.setItem('admin_authed', 'true')
       localStorage.setItem('admin_pw', pw)
+      localStorage.setItem('admin_user', username)
+      setSignedInAs(username)
       setAuthed(true)
     } else {
-      setPwError('Wrong password')
+      setPwError('Wrong username or password')
     }
   }
 
@@ -276,10 +284,11 @@ export default function AdminPage() {
 
   const save = async (body: object) => {
     const storedPw = typeof window !== 'undefined' ? localStorage.getItem('admin_pw') ?? '' : ''
+    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('admin_user') ?? '' : ''
     const res = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: storedPw, ...body }),
+      body: JSON.stringify({ username: storedUser, password: storedPw, ...body }),
     })
     if (res.ok) {
       showMsg('Saved')
@@ -338,6 +347,24 @@ export default function AdminPage() {
           <h1 style={{ fontSize: 18, fontWeight: 600, color: '#f0f0f0', marginBottom: 24 }}>
             Admin
           </h1>
+          <Label>Who&apos;s signing in?</Label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {(['aviv', 'dana'] as const).map(u => (
+              <Btn
+                key={u}
+                onClick={() => { setUsername(u); setPwError('') }}
+                style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  textTransform: 'capitalize',
+                  background: username === u ? '#3a3a3a' : '#1e1e1e',
+                  borderColor: username === u ? '#555' : '#2a2a2a',
+                }}
+              >
+                {u}
+              </Btn>
+            ))}
+          </div>
           <Label>Password</Label>
           <Input
             type="password"
@@ -365,9 +392,22 @@ export default function AdminPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: '#f0f0f0' }}>Content Manager</h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {signedInAs && (
+            <span style={{ fontSize: 12, color: '#888', textTransform: 'capitalize' }}>
+              Signed in as {signedInAs}
+            </span>
+          )}
           {msg && <span style={{ fontSize: 12, color: '#4ade80' }}>{msg}</span>}
-          <Btn onClick={() => { localStorage.removeItem('admin_authed'); setAuthed(false) }} variant="danger">
+          <Btn
+            onClick={() => {
+              localStorage.removeItem('admin_authed')
+              localStorage.removeItem('admin_pw')
+              localStorage.removeItem('admin_user')
+              setAuthed(false)
+            }}
+            variant="danger"
+          >
             Sign out
           </Btn>
         </div>
