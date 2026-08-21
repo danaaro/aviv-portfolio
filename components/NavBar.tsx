@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 
+// The three system roots (see lib/types.ts ROOT_SLUGS) plus the About leaf.
 const TABS = [
   { label: 'Photography', href: '/photography' },
   { label: 'Cinema', href: '/cinema' },
@@ -42,30 +43,33 @@ export default function NavBar() {
     <>
       {/* ── Full header — scrolls with page ─────────── */}
       <header
-        style={{
-          position: 'relative',
-          background: `
-            linear-gradient(180deg, #eeeeee 0%, #dcdcdc 18%, #c8c8c8 42%, #bcbcbc 58%, #ababab 82%, #9e9e9e 100%),
-            repeating-linear-gradient(180deg, rgba(255,255,255,0.07) 0px, rgba(255,255,255,0.07) 1px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 3px)
-          `,
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.75), inset 0 -1px 0 rgba(0,0,0,0.12)',
-          borderBottom: '1px solid #888',
-          overflow: 'hidden',
-        }}
-        className="w-full"
+        className="w-full metal"
       >
-        {/* Engraved mark, top right — brushed into the metal, not painted on */}
+        {/*
+          Engraved mark, top right — cut into the metal rather than sitting on it.
+          Light reads as coming from above, so an incised shape is dark along its
+          upper wall and catches light along its lower wall. (The previous version
+          had these the other way round, which is the signature of a raised
+          emboss — hence it floated instead of biting in.)
+          brightness(0) flattens the art to a solid silhouette first, so the
+          effect doesn't depend on the source PNG's own colour.
+        */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
-            top: 6,
-            right: 18,
-            width: 52,
+            /* Centred on the full banner height, not the name strip: the tab
+               row stops well short of the right edge, so there is clear metal
+               here and the mark can breathe without the tabs painting over it. */
+            top: '50%',
+            right: 26,
+            width: 92,
+            transform: 'translateY(-50%)',
             pointerEvents: 'none',
+            opacity: 0.9,
           }}
         >
-          {/* raised edge catching light — bright silver */}
+          {/* upper wall in shadow — the deep edge of the groove */}
           <img
             src="/crispy-mark.png"
             alt=""
@@ -74,13 +78,13 @@ export default function NavBar() {
               inset: 0,
               width: '100%',
               height: 'auto',
-              filter: 'invert(1)',
-              transform: 'translate(-1.6px, -1.6px)',
-              mixBlendMode: 'soft-light',
-              opacity: 1,
+              filter: 'brightness(0) blur(0.6px)',
+              transform: 'translate(-1.3px, -2.1px)',
+              mixBlendMode: 'multiply',
+              opacity: 0.45,
             }}
           />
-          {/* recessed groove shadow — soft gray, not black */}
+          {/* lower wall catching the light — bright specular lip */}
           <img
             src="/crispy-mark.png"
             alt=""
@@ -89,13 +93,13 @@ export default function NavBar() {
               inset: 0,
               width: '100%',
               height: 'auto',
-              filter: 'invert(1) brightness(0.55) blur(0.3px)',
-              transform: 'translate(1.6px, 1.6px)',
-              mixBlendMode: 'multiply',
+              filter: 'brightness(0) invert(1) blur(0.55px)',
+              transform: 'translate(1.3px, 2.1px)',
+              mixBlendMode: 'screen',
               opacity: 0.6,
             }}
           />
-          {/* base — faint silver tone to ground the shape */}
+          {/* ambient occlusion pooling in the recess */}
           <img
             src="/crispy-mark.png"
             alt=""
@@ -103,9 +107,9 @@ export default function NavBar() {
               position: 'relative',
               width: '100%',
               height: 'auto',
-              filter: 'invert(1) brightness(0.85)',
-              mixBlendMode: 'soft-light',
-              opacity: 0.5,
+              filter: 'brightness(0) blur(1.3px)',
+              mixBlendMode: 'multiply',
+              opacity: 0.16,
             }}
           />
         </div>
@@ -117,7 +121,7 @@ export default function NavBar() {
             style={{ color: '#1a1a1a', textDecoration: 'none' }}
             className="text-xl font-semibold tracking-tight hover:opacity-80 transition-opacity"
           >
-            Aviv Shmuelov
+            CrispyIsland
           </Link>
         </div>
 
@@ -144,15 +148,10 @@ export default function NavBar() {
           left: 0,
           right: 0,
           zIndex: 50,
-          background: `
-            linear-gradient(180deg, #e4e4e4 0%, #d0d0d0 30%, #bcbcbc 65%, #adadad 100%),
-            repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, rgba(0,0,0,0.02) 2px, rgba(0,0,0,0.02) 3px)
-          `,
-          borderBottom: '1px solid #888',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.7)',
           transform: scrolled ? 'translateY(0)' : 'translateY(-100%)',
           transition: 'transform 0.25s ease',
         }}
+        className="metal metal-compact"
       >
         <button
           onClick={() => setOpen(o => !o)}
@@ -168,7 +167,7 @@ export default function NavBar() {
             color: '#1a1a1a',
           }}
         >
-          <span style={{ fontWeight: 600, fontSize: 14 }}>Aviv Shmuelov</span>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>CrispyIsland</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#333' }}>
             {activeTab && <span>{activeTab.label}</span>}
             <svg

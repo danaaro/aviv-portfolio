@@ -1,33 +1,51 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
-import Image from 'next/image'
+import { useEffect, useCallback, useRef, useState } from 'react'
 
-interface Photo {
+export interface LightboxPhoto {
   id: string
   src: string
   alt: string
+  title?: string
   caption?: string
 }
 
 interface LightboxProps {
-  photos: Photo[]
+  photos: LightboxPhoto[]
   index: number
+  /** Shown in the title bar: "Portraits — 7 of 24" */
+  folderName?: string
+  /** Film stills have no /p/[id] of their own, so they hide Share. */
+  shareable?: boolean
   onClose: () => void
   onPrev: () => void
   onNext: () => void
 }
 
-export default function Lightbox({ photos, index, onClose, onPrev, onNext }: LightboxProps) {
+/** V4 photo view — dark backdrop, arrows, caption, Share. M3 adds swipe. */
+export default function Lightbox({
+  photos,
+  index,
+  folderName,
+  shareable = true,
+  onClose,
+  onPrev,
+  onNext,
+}: LightboxProps) {
+  const [shareOpen, setShareOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const photo = photos[index]
 
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        if (shareOpen) setShareOpen(false)
+        else onClose()
+      }
       if (e.key === 'ArrowLeft') onPrev()
       if (e.key === 'ArrowRight') onNext()
     },
-    [onClose, onPrev, onNext]
+    [onClose, onPrev, onNext, shareOpen]
   )
 
   useEffect(() => {
@@ -39,152 +57,133 @@ export default function Lightbox({ photos, index, onClose, onPrev, onNext }: Lig
     }
   }, [handleKey])
 
+  // Close the share dialog when moving to another photo. Adjusting state during
+  // render (rather than in an effect) avoids a second render pass.
+  const [shownIndex, setShownIndex] = useState(index)
+  if (shownIndex !== index) {
+    setShownIndex(index)
+    setShareOpen(false)
+    setCopied(false)
+  }
+
+  // ── Swipe: left/right moves within the folder, down closes (M3) ──
+  const touch = useRef<{ x: number; y: number } | null>(null)
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    touch.current = { x: t.clientX, y: t.clientY }
+  }
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touch.current) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - touch.current.x
+    const dy = t.clientY - touch.current.y
+    touch.current = null
+
+    const THRESHOLD = 50
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > THRESHOLD) onPrev()
+      else if (dx < -THRESHOLD) onNext()
+    } else if (dy > THRESHOLD) {
+      onClose()
+    }
+  }
+
+  const shareUrl =
+    typeof window !== 'undefined' && photo ? `${window.location.origin}/p/${photo.id}` : ''
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+
   if (!photo) return null
 
+  const label = [photo.title, photo.caption].filter(Boolean).join(' — ')
+
   return (
-    <div className="lightbox-overlay" onClick={onClose}>
-      {/* Close */}
-      <button
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          top: 20,
-          right: 24,
-          background: 'none',
-          border: 'none',
-          color: '#fff',
-          fontSize: 28,
-          cursor: 'pointer',
-          lineHeight: 1,
-          opacity: 0.7,
-          zIndex: 10001,
-          padding: '4px 8px',
-        }}
-      >
+    <div
+      className="lightbox-overlay"
+      onClick={onClose}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Title bar — "Portraits — 7 of 24" */}
+      <div className="lightbox-titlebar" onClick={e => e.stopPropagation()}>
+        {[folderName, `${index + 1} of ${photos.length}`].filter(Boolean).join(' — ')}
+      </div>
+
+      <button onClick={onClose} className="lightbox-close" aria-label="Close">
         ×
       </button>
 
-      {/* Counter */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 24,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          color: 'rgba(255,255,255,0.5)',
-          fontSize: 12,
-          letterSpacing: '0.1em',
-        }}
-      >
-        {index + 1} / {photos.length}
-      </div>
-
-      {/* Prev */}
       {photos.length > 1 && (
         <button
-          onClick={e => { e.stopPropagation(); onPrev() }}
-          style={{
-            position: 'fixed',
-            left: 16,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            color: '#fff',
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            cursor: 'pointer',
-            fontSize: 20,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10001,
+          onClick={e => {
+            e.stopPropagation()
+            onPrev()
           }}
+          className="lightbox-arrow left"
+          aria-label="Previous photo"
         >
           ‹
         </button>
       )}
 
-      {/* Image */}
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          maxWidth: 'calc(100vw - 120px)',
-          maxHeight: 'calc(100vh - 80px)',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
+      <div className="lightbox-stage" onClick={e => e.stopPropagation()}>
         {photo.src ? (
-          <img
-            src={photo.src}
-            alt={photo.alt}
-            style={{
-              maxWidth: '100%',
-              maxHeight: 'calc(100vh - 120px)',
-              objectFit: 'contain',
-              display: 'block',
-              borderRadius: 2,
-            }}
-          />
+          <img src={photo.src} alt={photo.alt} className="lightbox-img" />
         ) : (
-          <div
-            style={{
-              width: 600,
-              height: 400,
-              background: '#1a1a1a',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#444',
-              fontSize: 14,
-            }}
-          >
-            Image coming soon
-          </div>
-        )}
-        {photo.caption && (
-          <p
-            style={{
-              marginTop: 12,
-              color: 'rgba(255,255,255,0.5)',
-              fontSize: 13,
-              textAlign: 'center',
-            }}
-          >
-            {photo.caption}
-          </p>
+          <div className="lightbox-missing">Image coming soon</div>
         )}
       </div>
 
-      {/* Next */}
       {photos.length > 1 && (
         <button
-          onClick={e => { e.stopPropagation(); onNext() }}
-          style={{
-            position: 'fixed',
-            right: 16,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            color: '#fff',
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            cursor: 'pointer',
-            fontSize: 20,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10001,
+          onClick={e => {
+            e.stopPropagation()
+            onNext()
           }}
+          className="lightbox-arrow right"
+          aria-label="Next photo"
         >
           ›
         </button>
+      )}
+
+      {/* Caption + Share, sitting on the status bar */}
+      <div className="lightbox-bar" onClick={e => e.stopPropagation()}>
+        <span className="lightbox-caption">{label}</span>
+        {shareable && (
+          <button className="win-btn" onClick={() => setShareOpen(true)}>
+            Share
+          </button>
+        )}
+      </div>
+
+      {/* V5 — copy link dialog */}
+      {shareOpen && (
+        <div className="lightbox-share-backdrop" onClick={() => setShareOpen(false)}>
+          <div className="win-dialog" onClick={e => e.stopPropagation()}>
+            <p className="win-dialog-title">Copy link to this photo</p>
+            <input className="win-dialog-field" readOnly value={shareUrl} onFocus={e => e.currentTarget.select()} />
+            <p className="win-dialog-note">Anyone with the link can view</p>
+            <div className="win-dialog-actions">
+              <button className="win-btn" onClick={() => setShareOpen(false)}>
+                Cancel
+              </button>
+              <button className="win-btn primary" onClick={copy}>
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -190,6 +190,8 @@ export default function FilmDetail({ film, onClose }: FilmDetailProps) {
         <Lightbox
           photos={stills.map(s => ({ id: s.id, src: s.src, alt: film.title, caption: s.caption }))}
           index={stillIndex}
+          folderName={film.title}
+          shareable={false}
           onClose={() => setStillIndex(null)}
           onPrev={() => setStillIndex(i => (i === null ? null : (i - 1 + stills.length) % stills.length))}
           onNext={() => setStillIndex(i => (i === null ? null : (i + 1) % stills.length))}
