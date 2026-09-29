@@ -39,9 +39,18 @@ export function googleConfigured(): boolean {
   return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
 }
 
-/** Absolute callback URL for this deployment — must match a URI registered in Google Cloud. */
+/**
+ * Absolute callback URL for this deployment — must match a URI registered in
+ * Google Cloud *exactly*, or Google fails with `redirect_uri_mismatch`.
+ *
+ * Normally derived from the request origin, which is right on both localhost
+ * and the custom domain. OAUTH_ORIGIN is an escape hatch for the case where a
+ * proxy makes the request origin differ from the public URL (e.g. reaching the
+ * site through its .vercel.app host instead of crispyisland.com).
+ */
 export function redirectUri(origin: string): string {
-  return `${origin}${CALLBACK_PATH}`
+  const base = (process.env.OAUTH_ORIGIN || origin).replace(/\/$/, '')
+  return `${base}${CALLBACK_PATH}`
 }
 
 export function authorizeUrl(origin: string, state: string): string {
