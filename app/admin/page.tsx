@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import AdminApp from '@/components/admin/AdminApp'
+import AdminShell from '@/components/admin/AdminShell'
 import SignIn from '@/components/admin/SignIn'
-import { loadTree } from '@/lib/content'
+import { loadTree, storeMode, treeRev } from '@/lib/content'
 import { currentAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
@@ -10,6 +10,9 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Admin — Aviv Shmuelof',
   robots: { index: false, follow: false },
+  // "Add to Home Screen" opens the admin like an app.
+  manifest: '/admin.webmanifest',
+  appleWebApp: { capable: true, title: 'Crispy Admin', statusBarStyle: 'black-translucent' },
 }
 
 /**
@@ -28,5 +31,13 @@ export default async function AdminPage({
   }
 
   const { tree, source } = await loadTree()
-  return <AdminApp initialTree={tree} user={user} readOnly={source === 'error'} />
+  return (
+    <AdminShell
+      initialTree={tree}
+      initialRev={await treeRev(tree)}
+      uploadMode={storeMode()}
+      user={user}
+      readOnly={source === 'error'}
+    />
+  )
 }

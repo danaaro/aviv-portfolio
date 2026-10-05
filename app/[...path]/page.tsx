@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import FolderView from '@/components/FolderView'
 import { getTree, folderByPath, folderCover } from '@/lib/content'
-import { folderCardsIn, itemCardsIn, toCrumbs } from '@/lib/view'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,22 +26,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * V2 / V3 — one recursive folder view at any depth. Renders child folders as
- * icons, child items as tiles, or both.
+ * V2 / V3 — any folder at any depth. The desktop opens it as a window from
+ * the URL; this route only validates the path and supplies metadata.
  */
 export default async function FolderPage({ params }: Props) {
   const { path } = await params
   const tree = await getTree()
-  const folder = folderByPath(tree, path)
-  if (!folder) notFound()
-
-  return (
-    <FolderView
-      title={folder.name}
-      crumbs={toCrumbs(tree, folder.id)}
-      folders={folderCardsIn(tree, folder.id)}
-      items={itemCardsIn(tree, folder.id)}
-      emptyLabel="Content coming soon"
-    />
-  )
+  if (!folderByPath(tree, path)) notFound()
+  return null
 }

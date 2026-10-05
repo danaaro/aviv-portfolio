@@ -12,6 +12,8 @@ export interface Folder {
   visible: boolean
   /** system roots cannot be renamed, reparented or deleted */
   system?: true
+  /** custom pixel icon (a name from lib/pix-icons); unset = the default */
+  icon?: string
 }
 
 interface ItemBase {
@@ -22,6 +24,8 @@ interface ItemBase {
   caption: string
   tags: string[]
   alt: string
+  /** custom pixel icon (a name from lib/pix-icons); unset = the default */
+  icon?: string
 }
 
 export interface PhotoItem extends ItemBase {
@@ -31,6 +35,23 @@ export interface PhotoItem extends ItemBase {
   height?: number
   /** set when the tile is really a video link — keeps the play badge behaviour */
   youtubeUrl?: string
+  /** clockwise turn, set in the admin for sideways scans; unset = as uploaded */
+  rotate?: Rotation
+}
+
+export type Rotation = 90 | 180 | 270
+export const ROTATIONS = [90, 180, 270] as const
+
+/** Class that turns a photo's <img> (see "Rotated photos" in globals.css). */
+export function rotClass(item: object | null | undefined): string {
+  const r = item && 'rotate' in item ? item.rotate : undefined
+  return r === 90 || r === 180 || r === 270 ? `rot-${r}` : ''
+}
+
+/** The next clockwise (dir 1) or counter-clockwise (dir -1) turn. */
+export function turned(r: number | undefined, dir: 1 | -1): Rotation | undefined {
+  const next = ((((r ?? 0) + dir * 90) % 360) + 360) % 360
+  return next === 0 ? undefined : (next as Rotation)
 }
 
 export interface Still {
@@ -56,9 +77,26 @@ export interface FilmItem extends ItemBase {
 
 export type Item = PhotoItem | FilmItem
 
+/** One poster in the Events app (edited in the admin). */
+export interface SiteEvent {
+  id: string
+  title: string
+  /** shown as written, e.g. "17.8" or "Summer 2026" */
+  date?: string
+  place?: string
+  about?: string
+  /** poster image URL (portrait works best) */
+  poster?: string
+  /** slug of the admin folder holding the photos from the night */
+  folderSlug?: string
+  link?: { label: string; href: string }
+}
+
 export interface Tree {
   folders: Folder[]
   items: Item[]
+  /** Events app posters, in display order. Unset = the bundled list in data/events.ts. */
+  events?: SiteEvent[]
 }
 
 export const ROOT_SLUGS = ['photography', 'cinema', 'commercial'] as const

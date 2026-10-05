@@ -1,4 +1,4 @@
-import { slugify, uniqueSlug } from './types'
+import { slugify, turned, uniqueSlug } from './types'
 import type { Folder, Item, PhotoItem, Tree } from './types'
 
 /**
@@ -34,10 +34,12 @@ export function deepItemCount(tree: Tree, folderId: string): number {
   return tree.items.filter(i => ids.has(i.folderId)).length
 }
 
-export function addFolder(tree: Tree, parentId: string, name: string): Tree {
+/** `id` can be passed in so a replayed change creates the same folder again. */
+export function addFolder(tree: Tree, parentId: string, name: string, id: string = newId()): Tree {
   const siblings = childrenOf(tree, parentId)
+  if (tree.folders.some(f => f.id === id)) return tree
   const folder: Folder = {
-    id: newId(),
+    id,
     name: name.trim(),
     slug: uniqueSlug(slugify(name), siblings.map(s => s.slug)),
     parentId,
@@ -67,6 +69,7 @@ export function updateFolder(tree: Tree, id: string, patch: Partial<Folder>): Tr
 export function deleteFolder(tree: Tree, id: string): Tree {
   const doomed = new Set(descendantIds(tree, id))
   return {
+    ...tree,
     folders: tree.folders.filter(f => !doomed.has(f.id)),
     items: tree.items.filter(i => !doomed.has(i.folderId)),
   }
@@ -104,6 +107,7 @@ export function updateItem(tree: Tree, id: string, patch: Partial<Item>): Tree {
 export function deleteItems(tree: Tree, ids: string[]): Tree {
   const doomed = new Set(ids)
   return {
+    ...tree,
     folders: tree.folders.map(f =>
       f.coverItemId && doomed.has(f.coverItemId) ? { ...f, coverItemId: undefined } : f
     ),
@@ -187,4 +191,89 @@ export function folderOptions(
   }
   walk(null, 0)
   return out
+}
+
+/** Put deleted folders/items back (Undo). Anything already present is left alone. */
+export function restoreDeleted(tree: Tree, folders: Folder[], items: Item[]): Tree {
+  const haveF = new Set(tree.folders.map(f => f.id))
+  const haveI = new Set(tree.items.map(i => i.id))
+  return {
+    ...tree,
+    folders: [...tree.folders, ...folders.filter(f => !haveF.has(f.id))],
+    items: [...tree.items, ...items.filter(i => !haveI.has(i.id))],
+  }
+}
+
+/** Move an item into another folder, at the front. */
+export function moveItemTo(tree: Tree, id: string, folderId: string): Tree {
+  const item = tree.items.find(i => i.id === id)
+  if (!item || item.folderId === folderId || !tree.folders.some(f => f.id === folderId)) return tree
+  const rest = tree.items.filter(i => i.id !== id)
+  return addItemsToFront({ ...tree, items: rest }, folderId, [{ ...item, folderId }])
+}
+
+/** Put an item at `to` (0-based) among its folder's items — drag-and-drop. */
+export function reorderItem(tree: Tree, id: string, to: number): Tree {
+  const item = tree.items.find(i => i.id === id)
+  if (!item) return tree
+  const siblings = itemsOf(tree, item.folderId)
+  const from = siblings.findIndex(i => i.id === id)
+  to = Math.max(0, Math.min(siblings.length - 1, to))
+  if (from < 0 || from === to) return tree
+  return moveItem(tree, id, to - from)
+}
+
+/** Same, for a folder among its siblings. */
+export function reorderFolder(tree: Tree, id: string, to: number): Tree {
+  const folder = tree.folders.find(f => f.id === id)
+  if (!folder || folder.system) return tree
+  const siblings = childrenOf(tree, folder.parentId)
+  const from = siblings.findIndex(f => f.id === id)
+  to = Math.max(0, Math.min(siblings.length - 1, to))
+  if (from < 0 || from === to) return tree
+  return moveFolder(tree, id, to - from)
+}
+
+/** Move several items into a folder, at the front, keeping their order. */
+export function moveItemsTo(tree: Tree, ids: string[], folderId: string): Tree {
+  if (!tree.folders.some(f => f.id === folderId)) return tree
+  const set = new Set(ids)
+  const moving = tree.items
+    .filter(i => set.has(i.id) && i.folderId !== folderId)
+    .sort((a, b) => (a.folderId === b.folderId ? a.position - b.position : 0))
+  if (!moving.length) return tree
+  const leaving = new Set(moving.map(i => i.id))
+  const rest = tree.items.filter(i => !leaving.has(i.id))
+  // Positions in the folders they left are renumbered when the tree is normalised on save.
+  const cleared = {
+    ...tree,
+    folders: tree.folders.map(f => (f.coverItemId && leaving.has(f.coverItemId) && f.id !== folderId ? { ...f, coverItemId: undefined } : f)),
+    items: rest,
+  }
+  return addItemsToFront(cleared, folderId, moving.map(i => ({ ...i, folderId })))
+}
+
+/** Add one tag to several items (no duplicates). */
+export function tagItems(tree: Tree, ids: string[], tag: string): Tree {
+  const t = tag.trim()
+  if (!t) return tree
+  const set = new Set(ids)
+  return {
+    ...tree,
+    items: tree.items.map(i => (set.has(i.id) && !i.tags.includes(t) ? { ...i, tags: [...i.tags, t] } : i)),
+  }
+}
+
+/** Turn several photos 90° (films and video tiles are left alone). */
+export function rotateItems(tree: Tree, ids: string[], dir: 1 | -1): Tree {
+  const set = new Set(ids)
+  return {
+    ...tree,
+    items: tree.items.map(i => {
+      if (!set.has(i.id) || i.kind !== 'photo') return i
+      const { rotate: _old, ...rest } = i
+      const r = turned(i.rotate, dir)
+      return (r ? { ...rest, rotate: r } : rest) as Item
+    }),
+  }
 }

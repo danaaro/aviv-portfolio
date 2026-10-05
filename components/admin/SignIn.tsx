@@ -1,5 +1,6 @@
 'use client'
 
+import PixIcon from '@/components/PixIcon'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
@@ -48,9 +49,11 @@ export default function SignIn({ oauthError }: { oauthError?: string }) {
   }
 
   return (
-    <div className="win" style={{ maxWidth: 460 }}>
+    <div className="win signin-win" style={{ maxWidth: 460 }}>
       <div className="win-titlebar">
-        <span className="win-close" aria-hidden="true" />
+        <a className="win-close" href="/" title="Back to the site" aria-label="Back to the site">
+          <PixIcon name="x" size={13} />
+        </a>
         <span className="win-title">crispyisland.com/admin</span>
       </div>
 

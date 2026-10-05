@@ -3,14 +3,15 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
+import PixIcon from '@/components/PixIcon'
 
 // The three system roots (see lib/types.ts ROOT_SLUGS) plus the About leaf.
 const TABS = [
-  { label: 'Photography', href: '/photography' },
-  { label: 'Cinema', href: '/cinema' },
-  { label: 'Commercial', href: '/commercial' },
-  { label: 'About', href: '/about' },
-]
+  { label: 'Photography', href: '/photography', icon: 'photo-camera' },
+  { label: 'Cinema', href: '/cinema', icon: 'movie-camera' },
+  { label: 'Commercial', href: '/commercial', icon: 'camcorder' },
+  { label: 'About', href: '/about', icon: 'smiley' },
+] as const
 
 export default function NavBar() {
   const pathname = usePathname()
@@ -38,6 +39,9 @@ export default function NavBar() {
     if (open) document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [open])
+
+  // The secret 90s page is its own world — no nav.
+  if (pathname?.startsWith('/secret')) return null
 
   return (
     <>
@@ -119,9 +123,10 @@ export default function NavBar() {
           <Link
             href="/"
             style={{ color: '#1a1a1a', textDecoration: 'none' }}
-            className="text-xl font-semibold tracking-tight hover:opacity-80 transition-opacity"
+            className="hover:opacity-80 transition-opacity"
+            aria-label="CrispyIsland — home"
           >
-            CrispyIsland
+            <img src="/brand/crispy-island.png" alt="CrispyIsland" className="brand-banner" draggable={false} />
           </Link>
         </div>
 
@@ -133,6 +138,7 @@ export default function NavBar() {
               href={tab.href}
               className={`nav-tab${pathname?.startsWith(tab.href) ? ' active' : ''}`}
             >
+              <PixIcon name={tab.icon} size={14} className="nav-tab-icon" />
               {tab.label}
             </Link>
           ))}
@@ -167,7 +173,7 @@ export default function NavBar() {
             color: '#1a1a1a',
           }}
         >
-          <span style={{ fontWeight: 600, fontSize: 14 }}>CrispyIsland</span>
+          <img src="/brand/crispy-island.png" alt="CrispyIsland" className="brand-banner small" draggable={false} />
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#333' }}>
             {activeTab && <span>{activeTab.label}</span>}
             <svg

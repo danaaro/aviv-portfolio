@@ -1,7 +1,8 @@
 'use client'
 
+import PixIcon from '@/components/PixIcon'
 import { useEffect, useRef, useState } from 'react'
-import { itemThumb } from '@/lib/types'
+import { itemThumb, rotClass } from '@/lib/types'
 import type { FilmItem, Item, Still } from '@/lib/types'
 import { newId } from '@/lib/tree-ops'
 
@@ -10,6 +11,8 @@ interface Props {
   isCover: boolean
   onChange: (patch: Partial<Item>) => void
   onSetCover: () => void
+  /** turn a photo 90° (1 = clockwise) */
+  onRotate?: (dir: 1 | -1) => void
   onDelete: () => void
   onClose: () => void
   uploadFile: (file: File) => Promise<string | null>
@@ -21,6 +24,7 @@ export default function ItemInfo({
   isCover,
   onChange,
   onSetCover,
+  onRotate,
   onDelete,
   onClose,
   uploadFile,
@@ -65,14 +69,16 @@ export default function ItemInfo({
     <div className="lightbox-share-backdrop" onClick={onClose}>
       <div className="admin-info" onClick={e => e.stopPropagation()}>
         <div className="win-titlebar">
-          <span className="win-close" aria-hidden="true" />
+          <button type="button" className="win-close" onClick={onClose} title="Close" aria-label="Close">
+            <PixIcon name="x" size={13} />
+          </button>
           <span className="win-title">{item.title || 'Untitled'} — Get Info</span>
         </div>
 
         <div className="admin-info-body">
           <div className="admin-info-preview">
             {itemThumb(item) ? (
-              <img src={itemThumb(item)} alt={item.alt} />
+              <img src={itemThumb(item)} alt={item.alt} className={rotClass(item)} />
             ) : (
               <span className="item-tile-blank">{item.kind === 'film' ? 'FILM' : 'PHOTO'}</span>
             )}
@@ -154,6 +160,16 @@ export default function ItemInfo({
             )}
 
             <div className="admin-info-actions">
+              {onRotate && item.kind === 'photo' && (
+                <>
+                  <button className="win-btn" onClick={() => onRotate(-1)} title="Turn left" aria-label="Turn photo left">
+                    <PixIcon name="rotate" size={14} /> Left
+                  </button>
+                  <button className="win-btn" onClick={() => onRotate(1)} title="Turn right" aria-label="Turn photo right">
+                    <PixIcon name="rotate" size={14} className="pix-flip" /> Right
+                  </button>
+                </>
+              )}
               <button className="win-btn" onClick={onSetCover} disabled={isCover}>
                 {isCover ? 'Folder cover' : 'Set as cover'}
               </button>

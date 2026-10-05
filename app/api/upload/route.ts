@@ -1,19 +1,15 @@
 import { NextRequest } from 'next/server'
 import { put } from '@vercel/blob'
 import { requireAdmin } from '@/lib/session'
+import { localStoreEnabled } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif']
-const MAX_BYTES = 25 * 1024 * 1024
-
-/** Mirrors localStoreEnabled() in lib/content.ts — keep local dev off production storage. */
-function localStoreEnabled(): boolean {
-  const mode = process.env.CONTENT_STORE
-  if (mode === 'local') return true
-  if (mode === 'blob') return false
-  return !process.env.BLOB_READ_WRITE_TOKEN
-}
+// Server uploads are the local-dev path and a fallback. On Vercel, requests
+// over ~4.5 MB never reach this function, so the admin uploads full-size
+// originals straight to Blob via /api/upload/client instead.
+const MAX_BYTES = 100 * 1024 * 1024
 
 export async function POST(req: NextRequest) {
   // Previously open to the world, which let anyone write to the Blob store.
@@ -30,7 +26,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: `Unsupported file type: ${file.type || 'unknown'}` }, { status: 415 })
   }
   if (file.size > MAX_BYTES) {
-    return Response.json({ error: 'File is larger than 25 MB' }, { status: 413 })
+    return Response.json({ error: 'File is larger than 100 MB' }, { status: 413 })
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'

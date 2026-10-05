@@ -1,5 +1,6 @@
 'use client'
 
+import { rotClass } from '@/lib/types'
 import { useEffect, useCallback, useRef, useState } from 'react'
 
 export interface LightboxPhoto {
@@ -8,6 +9,7 @@ export interface LightboxPhoto {
   alt: string
   title?: string
   caption?: string
+  rotate?: number
 }
 
 interface LightboxProps {
@@ -138,7 +140,7 @@ export default function Lightbox({
 
       <div className="lightbox-stage" onClick={e => e.stopPropagation()}>
         {photo.src ? (
-          <img src={photo.src} alt={photo.alt} className="lightbox-img" />
+          <img src={photo.src} alt={photo.alt} className={`lightbox-img ${rotClass(photo)}`} />
         ) : (
           <div className="lightbox-missing">Image coming soon</div>
         )}

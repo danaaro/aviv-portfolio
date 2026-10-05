@@ -1,5 +1,6 @@
 import { ROOT_SLUGS, slugify, uniqueSlug } from './types'
-import type { Folder, Item, Tree } from './types'
+import type { Folder, Item, Rotation, SiteEvent, Tree } from './types'
+import { isPixName } from './pix-icons'
 
 export class TreeError extends Error {}
 
@@ -30,6 +31,7 @@ export function normalizeTree(raw: unknown): Tree {
       ...(f.coverItemId ? { coverItemId: String(f.coverItemId) } : {}),
       visible: f.visible !== false,
       ...(f.system ? { system: true as const } : {}),
+      ...(isPixName(f.icon) ? { icon: f.icon } : {}),
     }
   })
 
@@ -98,6 +100,7 @@ export function normalizeTree(raw: unknown): Tree {
       caption: String(i.caption ?? ''),
       tags: Array.isArray(i.tags) ? i.tags.map(String).filter(Boolean) : [],
       alt: String(i.alt ?? ''),
+      ...(isPixName(i.icon) ? { icon: i.icon } : {}),
     }
 
     if (i.kind === 'film') {
@@ -126,6 +129,7 @@ export function normalizeTree(raw: unknown): Tree {
       ...(i.width ? { width: Number(i.width) } : {}),
       ...(i.height ? { height: Number(i.height) } : {}),
       ...(i.youtubeUrl ? { youtubeUrl: String(i.youtubeUrl) } : {}),
+      ...([90, 180, 270].includes(Number(i.rotate)) ? { rotate: Number(i.rotate) as Rotation } : {}),
     }
   })
 
@@ -146,5 +150,34 @@ export function normalizeTree(raw: unknown): Tree {
     if (folder.coverItemId && !seenItemIds.has(folder.coverItemId)) delete folder.coverItemId
   }
 
-  return { folders: cleanFolders, items: cleanItems }
+  const events = normalizeEvents((raw as { events?: unknown }).events)
+  return { folders: cleanFolders, items: cleanItems, ...(events ? { events } : {}) }
+}
+
+const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+
+/** Events list: keep only well-formed entries, trimmed; unset stays unset. */
+function normalizeEvents(raw: unknown): SiteEvent[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const seen = new Set<string>()
+  const out: SiteEvent[] = []
+  for (const e of raw as Record<string, unknown>[]) {
+    const id = str(e?.id, 80)
+    const title = str(e?.title, 200)
+    if (!id || !title || seen.has(id)) continue
+    seen.add(id)
+    const link = e.link as { label?: unknown; href?: unknown } | undefined
+    const href = str(link?.href, 500)
+    out.push({
+      id,
+      title,
+      ...(str(e.date, 60) ? { date: str(e.date, 60) } : {}),
+      ...(str(e.place, 200) ? { place: str(e.place, 200) } : {}),
+      ...(str(e.about, 1000) ? { about: str(e.about, 1000) } : {}),
+      ...(str(e.poster, 1000) ? { poster: str(e.poster, 1000) } : {}),
+      ...(str(e.folderSlug, 200) ? { folderSlug: slugify(str(e.folderSlug, 200)) } : {}),
+      ...(href && /^(https?:\/\/|\/)/.test(href) ? { link: { label: str(link?.label, 80) || 'Link', href } } : {}),
+    })
+  }
+  return out
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import PhotoPermalink from '@/components/PhotoPermalink'
-import { getTree, itemById, itemsIn, folderById, pathOf } from '@/lib/content'
+import { getTree, itemById, folderById } from '@/lib/content'
 import { itemThumb } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -40,33 +39,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-/** Single-photo permalink — the target of the V5 share dialog. */
+/**
+ * Single photo or film permalink — the target of Copy Link. The desktop opens
+ * the item's folder with the item in front; this route validates and supplies
+ * the share-card metadata.
+ */
 export default async function PhotoPage({ params }: Props) {
   const { id } = await params
   const tree = await getTree()
   const item = itemById(tree, id)
-  if (!item) notFound()
-
-  const folder = folderById(tree, item.folderId)
-  if (!folder) notFound()
-
-  // Arrow through the whole folder from a shared link, same as in the grid.
-  const photos = itemsIn(tree, folder.id).filter(i => i.kind === 'photo' && !i.youtubeUrl)
-  const startIndex = photos.findIndex(p => p.id === item.id)
-  if (startIndex < 0) notFound()
-
-  return (
-    <PhotoPermalink
-      photos={photos.map(p => ({
-        id: p.id,
-        src: itemThumb(p),
-        alt: p.alt || p.title,
-        title: p.title,
-        caption: p.caption,
-      }))}
-      startIndex={startIndex}
-      folderName={folder.name}
-      folderHref={pathOf(tree, folder.id)}
-    />
-  )
+  if (!item || !folderById(tree, item.folderId)) notFound()
+  return null
 }
